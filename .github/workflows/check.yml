@@ -1,0 +1,32 @@
+# 质检门禁：push / PR 到 main 时跑 npm run check（四处 tsc ＋ 引擎 vitest ＋ 插件/验证台冒烟）。
+# 目的＝给「agent 忘跑质检 / && 链断裂红着也 commit」这类已发生过的失误兜底（HANDOFF 坑4）。
+# 不动本地小步快改节奏；失败会以邮件/仓库红叉可见。
+name: check
+permissions:
+  contents: read
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+concurrency:
+  group: check-${{ github.ref }}
+  # PR 连续 push 取消旧 run；main 分支每个 commit 都要有红/绿结论，不取消
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # 插件构建里的 install() 会往 vault 拷文件——CI 无 vault，指到临时目录即可（脚本对不存在的 vault 只警告不失败）
+      - run: npm run check
+      # 插件真实打包一遍（抓 esbuild 层错误，如误 import 了 external 之外的运行时模块）；无 vault 只警告不装
+      - run: npm run build
+        env:
+          BAZI_VAULT: /tmp/no-vault

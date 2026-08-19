@@ -1,0 +1,22 @@
+{
+  "name": "guyu-bazi",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "version": "0.1.0",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "test": "npm --workspace @bazi/core run test",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "smoke": "npm run smoke --workspaces --if-present",
+    "check": "npm run typecheck && npm test && npm run smoke",
+    "build": "npm --workspace @bazi/plugin run build",
+    "release": "npm --workspace @bazi/plugin run release",
+    "rollback": "npm --workspace @bazi/plugin run rollback --"
+  },
+  "allowScripts": {
+    "esbuild@0.21.5": true
+  }
+}
