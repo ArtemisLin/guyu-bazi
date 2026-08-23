@@ -182,21 +182,37 @@ export async function updateBirthFrontmatter(app: App, file: TFile, b: Birth, pi
   })
 }
 
-/** 批注行写进「## 人生节点」节末；笔记没有该节则在文末补节。原子读改写，见 appendConsult 注 */
-export async function appendAnnotation(app: App, file: TFile, line: string): Promise<void> {
+/**
+ * 纯函数：把批注行插进全文「## 人生节点」节末（无节则文末补节）。
+ * 返回新文本与锚行行号（0-based，全文坐标含 frontmatter）——就地批注要用行号定位光标（docs/00 #79）。
+ * 磁盘路径（appendAnnotation）与内嵌编辑器缓冲区路径共用本函数，插入逻辑单源。
+ */
+export function insertAnnotationLine(text: string, line: string): { text: string; lineNo: number; hadSection: boolean } {
+  const lines = text.split('\n')
+  const h = lines.findIndex((l) => /^##\s*人生节点/.test(l))
+  if (h < 0) {
+    const nt = `${text.replace(/\s*$/, '')}\n\n## 人生节点\n\n${line}\n`
+    return { text: nt, lineNo: nt.split('\n').length - 2, hadSection: false }
+  }
+  let end = lines.length
+  for (let i = h + 1; i < lines.length; i++)
+    if (/^##\s/.test(lines[i])) {
+      end = i
+      break
+    }
+  let ins = end
+  while (ins > h + 1 && lines[ins - 1].trim() === '') ins--
+  lines.splice(ins, 0, line)
+  return { text: lines.join('\n'), lineNo: ins, hadSection: true }
+}
+
+/** 批注行写进「## 人生节点」节末（原子读改写，见 appendConsult 注）；返回锚行行号供光标定位 */
+export async function appendAnnotation(app: App, file: TFile, line: string): Promise<number> {
+  let lineNo = 0
   await app.vault.process(file, (text) => {
-    const lines = text.split('\n')
-    const h = lines.findIndex((l) => /^##\s*人生节点/.test(l))
-    if (h < 0) return `${text.replace(/\s*$/, '')}\n\n## 人生节点\n\n${line}\n`
-    let end = lines.length
-    for (let i = h + 1; i < lines.length; i++)
-      if (/^##\s/.test(lines[i])) {
-        end = i
-        break
-      }
-    let ins = end
-    while (ins > h + 1 && lines[ins - 1].trim() === '') ins--
-    lines.splice(ins, 0, line)
-    return lines.join('\n')
+    const r = insertAnnotationLine(text, line)
+    lineNo = r.lineNo
+    return r.text
   })
+  return lineNo
 }

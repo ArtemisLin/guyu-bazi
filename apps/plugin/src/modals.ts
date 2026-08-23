@@ -1,35 +1,5 @@
-/** 批注录入弹窗＋同生辰三选对话（从 main.ts 拆出，2026-08-18） */
+/** 同生辰三选对话（从 main.ts 拆出，2026-08-18；批注弹窗已删——就地批注见 view.ts annotate()，docs/00 #79） */
 import { Modal, Notice, Setting, type App } from 'obsidian'
-
-export class AnnotateModal extends Modal {
-  private text: string
-  constructor(app: App, private label: string, private onSubmit: (text: string) => void, initial = '') {
-    super(app)
-    this.text = initial
-  }
-
-  onOpen() {
-    const { contentEl } = this
-    contentEl.createEl('h3', { text: '批注此时点' })
-    contentEl.createDiv({ cls: 'bz-anno-label', text: `⏱ ${this.label}` })
-    const ta = contentEl.createEl('textarea', {
-      cls: 'bz-anno-ta',
-      attr: { rows: '5', placeholder: '批语……（此年/月/日发生了什么、断了什么、应验如何）' },
-    })
-    ta.value = this.text
-    ta.oninput = () => (this.text = ta.value)
-    new Setting(contentEl).addButton((b) => b.setButtonText('写入笔记').setCta().onClick(() => {
-      if (!this.text.trim()) return void new Notice('批语为空')
-      this.close()
-      this.onSubmit(this.text.trim())
-    }))
-    ta.focus()
-  }
-
-  onClose() {
-    this.contentEl.empty()
-  }
-}
 
 // ───────────────────────── 同生辰三选 ─────────────────────────
 

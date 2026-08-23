@@ -148,9 +148,8 @@ button.bz-yearcell:hover { background: var(--background-modifier-hover); }
 .bz-tagchip { padding: 1px 10px; border: 1px solid var(--background-modifier-border); border-radius: 99px; font-size: 12px; cursor: pointer; }
 .bz-tagchip.on { border-color: var(--interactive-accent); color: var(--interactive-accent); background: var(--background-modifier-hover); }
 
-/* 批注 Modal 与阅读模式跳盘按钮 */
+/* 同生辰三选提示行与阅读模式跳盘按钮（批注弹窗已删——就地批注，docs/00 #79） */
 .bz-anno-label { font-weight: 600; margin-bottom: 8px; color: var(--interactive-accent); }
-.bz-anno-ta { width: 100%; min-height: 110px; font: inherit; }
 button.bz-tl-jump { font-size: 11px; margin-left: 8px; padding: 0 8px; cursor: pointer; border-radius: 5px; vertical-align: 1px; }
 
 .bz-head { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0 2px 8px; font-size: 12.5px; color: var(--bz-mut); }

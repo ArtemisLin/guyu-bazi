@@ -9,7 +9,6 @@ import {
   type ChartResult, type LiurenLevel, type PillarDetail,
 } from '@bazi/core'
 import { HeavenStem, SixtyCycle, SolarDay } from 'tyme4ts'
-import { REGIONS, regionCoord } from './regions'
 export { REGIONS, regionCoord } from './regions'
 export type { Region, RegionCity, RegionArea } from './regions'
 

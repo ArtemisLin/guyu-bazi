@@ -6,9 +6,9 @@ import { ItemView, MarkdownView, Notice, TFile, WorkspaceLeaf, sanitizeHTMLToDom
 import type { PanelAnchors } from '@bazi/view'
 import { anchorText, currentAnchor, formatAnnotationLine, parseAnnotations, restoreDrill, type DrillAnchor } from './anchor'
 import { buildChart, chartPaneHtml, locateNow } from './chartPane'
-import { AnnotateModal, DupCaseModal } from './modals'
+import { DupCaseModal } from './modals'
 import { NewChartModal } from './newChartModal'
-import { appendAnnotation, appendConsult, createNote, findExistingCase, noteFilePath, noteTemplate, todayStamp, updateBirthFrontmatter } from './note'
+import { appendAnnotation, appendConsult, createNote, findExistingCase, insertAnnotationLine, noteFilePath, noteTemplate, todayStamp, updateBirthFrontmatter } from './note'
 import type { BaziSettings, Birth, ViewState } from './types'
 import type BaziPlugin from './main'
 
@@ -69,7 +69,7 @@ export class BaziView extends ItemView {
     A.tab.createSpan({ cls: 'chip bz-ver', text: `v${this.plugin.manifest.version}`, attr: { title: '谷雨八字插件版本；更新后需重载 Obsidian 才会变' } })
     A.tab.createDiv({ cls: 'bz-spacer' })
     const btnAnno = A.tab.createEl('button', { cls: 'bz-btn', text: '✍ 批注' })
-    btnAnno.onclick = () => this.openAnnotateModal()
+    btnAnno.onclick = () => void this.annotate()
     const btnEdit = A.tab.createEl('button', { cls: 'bz-btn', text: '✎ 改生辰' })
     btnEdit.onclick = () => this.openEditBirthModal()
     const btnNew = A.tab.createEl('button', { cls: 'bz-btn', text: '＋新盘' })
@@ -275,35 +275,71 @@ export class BaziView extends ItemView {
   }
 
   /**
-   * 盘→笔记：批注当前选中的年/月/日/时。写入失败时批语连同原锚回填重开 Modal，绝不丢字、锚不漂移
-   * （途中 loadCase 会重置钻取状态，重开时必须用首次计算的锚——审查核验修正，2026-08-11）。
+   * 盘→笔记：就地批注（docs/00 #79，用户裁决：弹窗彻底删除，批注时盘面必须全程可见）。
+   * 点「✍ 批注」＝中栏自动展开并进入内嵌编辑，把当前钻取时点的锚行插进「## 人生节点」节末，
+   * 光标落在锚行末尾直接书写批语；写的过程中可继续看盘/钻取（再按批注＝另起一行新锚）。
+   * 行格式不变（- ⏱ …｜… —— 批语，docs/13 §3），时间线/⇄盘照常识别。
    */
-  openAnnotateModal(initialText = '', presetAnchor?: DrillAnchor) {
+  async annotate() {
     const c = this.st.chart
     if (!c) return void new Notice('先排盘再批注')
     if (!this.st.notePath && this.st.caseName === '即时盘')
       return void new Notice('即时盘不落笔记——用「＋新盘」建案例后再批注')
-    const a = presetAnchor ?? currentAnchor(this.st, c)
+    const a = currentAnchor(this.st, c)
     const label = anchorText(a, c.birthYear)
-    new AnnotateModal(this.app, label, async (text) => {
-      try {
-        // 纯文本回退编辑中：Modal 弹出时 textarea 已失焦保存，退出编辑避免旧文覆盖批注；
-        // 内嵌原生编辑器实时写盘且同文件多视图自动同步，无需退出
-        if (this.st.editing && !this.embedLeaf) this.st.editing = false
-        if (!this.st.notePath) await this.onNewChart(this.st.caseName || '未命名', this.st.birth)
-        const f = this.st.notePath ? this.app.vault.getAbstractFileByPath(this.st.notePath) : null
-        if (!(f instanceof TFile)) {
-          new Notice('没有对应笔记，批注未写入——批语已保留在重新打开的弹窗里')
-          this.openAnnotateModal(text, a)
-          return
-        }
-        await appendAnnotation(this.app, f, formatAnnotationLine(a, text))
-        new Notice(`已批注：${label}`)
-      } catch (e) {
-        new Notice(`批注写入失败：${e instanceof Error ? e.message : String(e)}——批语已保留在重新打开的弹窗里`)
-        this.openAnnotateModal(text, a)
+    try {
+      if (!this.st.notePath) await this.onNewChart(this.st.caseName || '未命名', this.st.birth)
+      const f = this.st.notePath ? this.app.vault.getAbstractFileByPath(this.st.notePath) : null
+      if (!(f instanceof TFile)) return void new Notice('没有对应笔记，批注未写入——先建断案笔记再批注')
+      const line = formatAnnotationLine(a, '')
+      // 中栏折叠时自动展开：批注要看得见写的地方
+      if (this.plugin.settings.panes.noteFold) {
+        this.plugin.settings.panes.noteFold = false
+        void this.plugin.saveSettings()
+        this.applyLayout()
       }
-    }, initialText).open()
+      let lineNo: number
+      const liveEd = this.st.editing && this.embedLeaf?.view instanceof MarkdownView ? this.embedLeaf.view.editor : null
+      if (liveEd) {
+        // 已在内嵌编辑中：直接改编辑器缓冲区（不绕道磁盘——避免与防抖落盘并发，且保留撤销历史）
+        const r = insertAnnotationLine(liveEd.getValue(), line)
+        if (r.hadSection && r.lineNo <= liveEd.lastLine()) liveEd.replaceRange(line + '\n', { line: r.lineNo, ch: 0 })
+        else liveEd.setValue(r.text)
+        lineNo = r.lineNo
+      } else {
+        // 时间线态/纯文本回退态：先原子落盘，再进入编辑模式（编辑器读到的就是含锚行的新文）
+        if (this.st.editing && !this.embedLeaf) this.st.editing = false
+        lineNo = await appendAnnotation(this.app, f, line)
+        this.st.editing = true
+        await this.renderNotePane()
+      }
+      this.focusAnnotationLine(lineNo, line)
+      new Notice(`✍ ${label}——批语直接写在右侧锚行后`)
+    } catch (e) {
+      new Notice(`批注失败：${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+
+  /** 光标定位到刚插入的锚行末尾（内嵌编辑器精确定位；纯文本回退按文本搜索尽力而为） */
+  private focusAnnotationLine(lineNo: number, line: string) {
+    const view = this.embedLeaf?.view
+    if (view instanceof MarkdownView) {
+      const ed = view.editor
+      const ln = Math.min(lineNo, ed.lastLine())
+      const pos = { line: ln, ch: ed.getLine(ln).length }
+      ed.setCursor(pos)
+      ed.scrollIntoView({ from: pos, to: pos }, true)
+      ed.focus()
+      return
+    }
+    const ta = this.noteEl.querySelector<HTMLTextAreaElement>('.bz-edit-ta')
+    if (!ta) return
+    const at = ta.value.lastIndexOf(line)
+    if (at >= 0) {
+      const end = at + line.length
+      ta.setSelectionRange(end, end)
+    }
+    ta.focus()
   }
 
   /**
