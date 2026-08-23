@@ -4,6 +4,14 @@
 .bz-noteblock { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border: 1px solid var(--background-modifier-border); border-left: 3px solid var(--interactive-accent); border-radius: 0 8px 8px 0; padding: 8px 12px; background: var(--background-secondary); font-size: 13px; color: var(--text-muted); }
 .bz-noteblock button { cursor: pointer; font-size: 12.5px; padding: 4px 14px; border-radius: 6px; background: var(--interactive-accent); color: var(--text-on-accent); border: none; }
 
+/* 五行色（浅/深两套）：盘面 .bz-root 与录入弹窗 .bz-modal 共用——弹窗不在 .bz-root 下（2026-08-20 四柱选择器着色） */
+.bz-root, .bz-modal {
+  --wood: #1e8e47; --fire: #c93a28; --earth: #8a5416; --metal: #c29200; --water: #1f6dbf;
+}
+.theme-dark .bz-root, .theme-dark .bz-modal {
+  --wood: #45b96b; --fire: #e2604a; --earth: #b3703a; --metal: #f5cd3d; --water: #549fe0;
+}
+
 .bz-root {
   --bz-line: var(--background-modifier-border);
   --bz-card: var(--background-secondary);
@@ -13,13 +21,11 @@
   --bz-dim: var(--text-faint);
   --bz-accent: var(--interactive-accent);
   --bz-accent-dim: var(--background-modifier-hover);
-  --wood: #1e8e47; --fire: #c93a28; --earth: #8a5416; --metal: #c29200; --water: #1f6dbf;
   --liuren: #7a5ea8; --liuren-dim: rgba(122, 94, 168, .08);
   --warn: #8a5a00; --warn-line: #c09045;
   height: 100%; overflow: hidden;
 }
 .theme-dark .bz-root {
-  --wood: #45b96b; --fire: #e2604a; --earth: #b3703a; --metal: #f5cd3d; --water: #549fe0;
   --liuren: #a98fd6; --liuren-dim: rgba(169, 143, 214, .10);
   --warn: #d9a94d; --warn-line: #8a6d3b;
 }
@@ -52,7 +58,8 @@
 .bz-spacer { flex: 1; }
 .bz-pane-body { flex: 1; overflow-y: auto; padding: 12px 14px 24px; }
 .bz-btn { font-size: 12px; padding: 3px 10px; border-radius: 6px; cursor: pointer; }
-.bz-btn.bz-primary { background: var(--bz-accent); color: var(--text-on-accent); }
+/* --bz-accent 只在 .bz-root 下有定义：弹窗等场景兜底到全局强调色，否则透明底＋白字隐形（2026-08-20 查找生辰按钮事故） */
+.bz-btn.bz-primary { background: var(--bz-accent, var(--interactive-accent)); color: var(--text-on-accent); }
 .bz-empty, .bz-holdnote { color: var(--bz-mut); font-size: 13px; padding: 16px 2px; line-height: 1.8; }
 .bz-ai > * { opacity: .6; }
 .bz-warn-chip { color: var(--warn); border-color: var(--warn-line); }
@@ -87,7 +94,8 @@
 .bz-savedhint { font-size: 11px; color: var(--bz-dim); align-self: center; }
 
 /* 新盘/改生辰 Modal：下拉行与真太阳时预览 */
-.bz-mrow { display: flex; gap: 4px; flex-wrap: wrap; }
+/* position:relative 兼作四柱干支弹层 .bz-gzpop 的定位锚（弹层挂行右缘向左展开——setting-item-control 靠右排布，行左缘不贴弹窗左缘） */
+.bz-mrow { display: flex; gap: 4px; flex-wrap: wrap; position: relative; }
 .bz-msel { font: inherit; }
 .bz-mpreview { margin: 10px 2px; font-size: 12.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 /* 夏令时确认项（仅 1986–1991 夏令时区间日期出现） */
@@ -114,6 +122,19 @@ span.bz-yearcell { cursor: default; }
 button.bz-yearcell:hover { background: var(--background-modifier-hover); }
 .bz-yearcell.dec { font-weight: 700; }
 .bz-yearcell.on { background: var(--interactive-accent); color: var(--text-on-accent); }
+/* 四柱干支网格选择器：按钮＋弹层（60 甲子 10 个/行共 6 行，逐字五行着色；替代原生长下拉，2026-08-20 用户反馈） */
+.bz-gzpick { display: inline-block; }
+.bz-gzbtn { font: inherit; font-size: 13.5px; padding: 3px 12px; cursor: pointer; }
+.bz-gzbtn.empty { color: var(--text-muted); }
+.bz-gzbtn:disabled { cursor: default; opacity: .5; }
+.bz-gzpop { position: absolute; top: calc(100% + 4px); right: 0; z-index: 100; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 8px; box-shadow: var(--shadow-s, 0 2px 12px rgba(0, 0, 0, 0.25)); padding: 6px; max-height: 320px; overflow-y: auto; }
+.bz-gzrow { display: flex; gap: 2px; }
+.bz-gzrow + .bz-gzrow { margin-top: 2px; }
+.bz-gzcell { flex: 0 0 auto; min-width: 46px; padding: 4px 3px; font-size: 13.5px; text-align: center; background: transparent; border: none; box-shadow: none; border-radius: 4px; cursor: pointer; }
+.bz-gzcell:hover { background: var(--background-modifier-hover); }
+.bz-gzcell.on { box-shadow: inset 0 0 0 2px var(--interactive-accent); }
+.bz-gz-suffix { color: var(--text-muted); font-size: 11px; }
+
 /* 四柱反推录入：提示行与候选生辰列表 */
 .bz-szhint { margin: 6px 2px 0; font-size: 12px; color: var(--text-muted); }
 .bz-cands { margin: 8px 0 2px; display: flex; flex-direction: column; gap: 4px; }
@@ -184,9 +205,9 @@ button.bz-tl-jump { font-size: 11px; margin-left: 8px; padding: 0 8px; cursor: p
 .bz-root .wang { display: flex; gap: 6px; margin-top: 12px; }
 .bz-root .wang span { flex: 1; text-align: center; border: 1px solid var(--bz-line); border-radius: 8px; padding: 3px 0; background: var(--bz-panel); font-size: 12.5px; }
 
-.bz-root .wx-wood { color: var(--wood); } .bz-root .wx-fire { color: var(--fire); }
-.bz-root .wx-earth { color: var(--earth); } .bz-root .wx-metal { color: var(--metal); }
-.bz-root .wx-water { color: var(--water); }
+.bz-root .wx-wood, .bz-modal .wx-wood { color: var(--wood); } .bz-root .wx-fire, .bz-modal .wx-fire { color: var(--fire); }
+.bz-root .wx-earth, .bz-modal .wx-earth { color: var(--earth); } .bz-root .wx-metal, .bz-modal .wx-metal { color: var(--metal); }
+.bz-root .wx-water, .bz-modal .wx-water { color: var(--water); }
 
 .bz-root .groups { display: flex; flex-direction: column; gap: 5px; margin-top: 6px; }
 /* flex-wrap＋可收缩标题＋弹性内容：修「长组标题把内容挤成一字一行、溢出到栏缝」（2026-08-05 用户截图） */

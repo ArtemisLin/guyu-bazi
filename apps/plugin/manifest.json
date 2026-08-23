@@ -1,7 +1,7 @@
 {
   "id": "guyu-bazi",
   "name": "GuYu BaZi",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "minAppVersion": "1.4.0",
   "description": "Chart BaZi four pillars with luck cycles, drill-down flows, and dynamic shensha, and keep case notes linked two-way to your charts. Fully offline, zero network requests.",
   "author": "artemislin",

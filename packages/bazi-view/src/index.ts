@@ -28,6 +28,8 @@ const WX: Record<string, string> = {
   寅: 'wood', 卯: 'wood', 巳: 'fire', 午: 'fire', 申: 'metal', 酉: 'metal', 亥: 'water', 子: 'water', 辰: 'earth', 戌: 'earth', 丑: 'earth', 未: 'earth',
 }
 export const wx = (c: string) => `<span class="wx-${WX[c]}">${c}</span>`
+/** 单字五行类名（wood/fire/earth/metal/water）：供 DOM API 场景（如插件弹窗）着色，避免另存一份 WX 表 */
+export const wxName = (c: string): string => WX[c] ?? ''
 export const wxGZ = (gz: string) => wx(gz[0]) + wx(gz[1])
 
 export function tenStarAbbr(dayMaster: string, target: string): string {

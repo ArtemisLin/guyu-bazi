@@ -1,7 +1,7 @@
 /** 新盘/改生辰录入弹窗（从 main.ts 拆出，2026-08-18；只依赖 plugin.settings 与 onSubmit 回调） */
 import { Modal, Notice, Setting, type App, type ButtonComponent } from 'obsidian'
 import { JIAZI, formatClock, inChinaDst, lunarDaysOf, lunarMonthsOf, lunarToSolar, reverseDayOptions, reverseFourPillars, reverseHourOptions, reverseMonthOptions, shiftClockMinutes, solarToLunar, toTrueSolar, type ClockTime, type ReverseCandidate } from '@bazi/core'
-import { REGIONS, regionCoord } from '@bazi/view'
+import { REGIONS, regionCoord, wxName } from '@bazi/view'
 import { collectTags, listSubfolders } from './note'
 import type { Birth } from './types'
 import type BaziPlugin from './main'
@@ -43,6 +43,8 @@ export class NewChartModal extends Modal {
   private submitBtn?: ButtonComponent
   /** 年份网格弹层开合（1801–2099 长列表的替代，docs/00 #62） */
   private yearPop = false
+  /** 四柱干支网格弹层：当前打开的是哪一柱（''＝都关） */
+  private gzPop: '' | 'y' | 'm' | 'd' | 'h' = ''
 
   private subFolder = ''
   private newFolder = ''
@@ -100,16 +102,37 @@ export class NewChartModal extends Modal {
     return s
   }
 
-  private selStr(parent: HTMLElement, opts: Array<[string, string]>, cur: string, onChange: (v: string) => void, disabled = false): HTMLSelectElement {
-    const s = parent.createEl('select', { cls: 'bz-msel' })
-    for (const [v, label] of opts) {
-      const o = s.createEl('option', { text: label })
-      o.value = v
-      if (v && v === cur) o.selected = true
+  /** 干支逐字按五行着色（晚子项「（晚）」后缀灰显小字） */
+  private gzText(el: HTMLElement, gz: string) {
+    for (const ch of gz.slice(0, 2)) el.createSpan({ cls: `wx-${wxName(ch)}`, text: ch })
+    if (gz.length > 2) el.createSpan({ cls: 'bz-gz-suffix', text: gz.slice(2) })
+  }
+
+  /**
+   * 四柱干支选择器：按钮＋网格弹层（60 甲子 10 个/行共 6 行，逐字五行着色），
+   * 替代原生 60 项竖排长下拉（看花眼且 option 无法着色，2026-08-20 用户截图反馈）。
+   * 弹层挂 .bz-mrow（position:relative）「右」缘向左展开——Obsidian .setting-item-control 是
+   * justify-content:flex-end，四柱行收缩贴右，锚左缘会右溢弹窗 ~276px（审查实测）。
+   * 重选当前值只收弹层不触发 onChange（原生 select 同值不发 change；无条件触发会级联清空后柱与候选）。
+   */
+  private gzPicker(parent: HTMLElement, key: 'y' | 'm' | 'd' | 'h', placeholder: string, opts: string[], cur: string, onChange: (v: string) => void, disabled = false) {
+    const wrap = parent.createSpan({ cls: `bz-gzpick${disabled ? ' disabled' : ''}` })
+    const btn = wrap.createEl('button', { cls: `bz-gzbtn${cur ? '' : ' empty'}` })
+    if (cur) this.gzText(btn, cur)
+    else btn.setText(placeholder)
+    btn.disabled = disabled
+    btn.onclick = () => { this.gzPop = this.gzPop === key ? '' : key; this.renderDateSection() }
+    if (this.gzPop !== key || disabled) return
+    const pop = wrap.createDiv({ cls: 'bz-gzpop' })
+    const perRow = opts.length > 20 ? 10 : 6
+    for (let i = 0; i < opts.length; i += perRow) {
+      const rowEl = pop.createDiv({ cls: 'bz-gzrow' })
+      for (const o of opts.slice(i, i + perRow)) {
+        const c = rowEl.createEl('button', { cls: `bz-gzcell${o === cur ? ' on' : ''}` })
+        this.gzText(c, o)
+        c.onclick = () => { this.gzPop = ''; o === cur ? this.renderDateSection() : onChange(o) }
+      }
     }
-    s.disabled = disabled
-    s.onchange = () => onChange(s.value)
-    return s
   }
 
   /** 日柱可选集缓存（年柱+月柱+流派 → 扫描一次，同验证台） */
@@ -236,6 +259,7 @@ export class NewChartModal extends Modal {
     if (mode === this.entryMode) return
     const prev = this.entryMode
     this.yearPop = false
+    this.gzPop = ''
     // 「两 tab 同一生辰」双向成立：切出农历先把换算结果回写公历（否则往返会静默重置所选农历日期），
     // 切入农历再从公历派生预填；1801 年下界钳到正月初一
     if (prev === '农历') {
@@ -287,23 +311,20 @@ export class NewChartModal extends Modal {
     } else {
       const dt = new Setting(el).setClass('bz-row-wide').setName('四柱').setDesc('从年柱依次选到时柱')
       const row = dt.controlEl.createDiv({ cls: 'bz-mrow' })
-      const gz = (o: string) => [o, o] as [string, string]
       const upd = (patch: Partial<{ y: string; m: string; d: string; h: string }>) => {
         Object.assign(this.sz, patch)
         this.cands = null
         this.renderDateSection()
       }
-      this.selStr(row, [['', '年柱'], ...JIAZI.map(gz)], this.sz.y, (v) => upd({ y: v, m: '', d: '', h: '' }))
-      this.selStr(row, [['', '月柱'], ...(this.sz.y ? reverseMonthOptions(this.sz.y).map(gz) : [])], this.sz.m, (v) => upd({ m: v, d: '', h: '' }), !this.sz.y)
-      this.selStr(row, [['', '日柱'], ...(this.sz.m ? this.dayOptions().map(gz) : [])], this.sz.d, (v) => upd({ d: v, h: '' }), !this.sz.m)
-      this.selStr(row, [['', '时柱'], ...(this.sz.d ? reverseHourOptions(this.sz.d, { ziShiSect: this.sect }).map(gz) : [])], this.sz.h, (v) => upd({ h: v }), !this.sz.d)
-      const btn = row.createEl('button', { cls: 'bz-btn bz-primary', text: '查找生辰' })
-      btn.disabled = !(this.sz.y && this.sz.m && this.sz.d && this.sz.h)
-      btn.onclick = () => {
+      this.gzPicker(row, 'y', '年柱', JIAZI, this.sz.y, (v) => upd({ y: v, m: '', d: '', h: '' }))
+      this.gzPicker(row, 'm', '月柱', this.sz.y ? reverseMonthOptions(this.sz.y) : [], this.sz.m, (v) => upd({ m: v, d: '', h: '' }), !this.sz.y)
+      this.gzPicker(row, 'd', '日柱', this.sz.m ? this.dayOptions() : [], this.sz.d, (v) => upd({ d: v, h: '' }), !this.sz.m)
+      this.gzPicker(row, 'h', '时柱', this.sz.d ? reverseHourOptions(this.sz.d, { ziShiSect: this.sect }) : [], this.sz.h, (v) => upd({ h: v }), !this.sz.d)
+      // 四柱选齐即自动反推（1801–2099 全范围扫描毫秒级，无须手动触发）。原「查找生辰」按钮已删：
+      // 其 --bz-accent 变量只在 .bz-root 下有定义，弹窗里背景失效＋白字近乎隐形，用户不知道要点它（2026-08-20 用户截图）
+      if (this.sz.y && this.sz.m && this.sz.d && this.sz.h && this.cands === null)
         this.cands = reverseFourPillars(this.sz.y, this.sz.m, this.sz.d, this.sz.h.replace('（晚）', ''), { ziShiSect: this.sect })
-        this.renderDateSection()
-      }
-      el.createDiv({ cls: 'bz-szhint', text: `查找范围 1801–2099；点中候选自动填回公历。${
+      el.createDiv({ cls: 'bz-szhint', text: `查找范围 1801–2099，四柱选齐自动列出候选生辰；点中候选自动填回公历。${
         this.sect === 'huanri' ? '换日派晚子＝次日日柱＋子时（候选列次日 0 点）。' : ''}` })
       if (this.cands) {
         const box = el.createDiv({ cls: 'bz-cands' })
@@ -339,6 +360,10 @@ export class NewChartModal extends Modal {
       if (this.yearPop && !(e.target as HTMLElement).closest('.bz-yearpick')) {
         this.yearPop = false
         this.dateSection.querySelector('.bz-yearpop')?.remove()
+      }
+      if (this.gzPop && !(e.target as HTMLElement).closest('.bz-gzpick:not(.disabled)')) {
+        this.gzPop = ''
+        this.dateSection.querySelector('.bz-gzpop')?.remove()
       }
     }, { capture: true })
     contentEl.createEl('h3', { text: this.prefill ? '修改生辰' : '新盘' })
