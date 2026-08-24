@@ -38,7 +38,7 @@
 .bz-pane-chart { --bz-w: 720px; }
 .bz-pane-note { --bz-w: 380px; }
 .bz-pane-ai { --bz-w: 260px; }
-.bz-hidden { display: none !important; }
+.bz-root .bz-hidden, .bz-modal .bz-hidden { display: none; }
 
 /* 分割线拖宽 */
 .bz-divider { flex: 0 0 5px; cursor: col-resize; background: var(--bz-line); opacity: .55; transition: opacity .15s, background .15s; }

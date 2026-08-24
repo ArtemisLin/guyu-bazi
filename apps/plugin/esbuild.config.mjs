@@ -149,6 +149,12 @@ if (rollbackIdx >= 0) {
 } else {
   mkdirSync('dist', { recursive: true })
   await build(opts)
+  // 目录审核的 Build verification 在仓库根 dist/ 找 main.js——三件套同步拷一份（根 dist/ 已 gitignore）
+  const rootDist = join('..', '..', 'dist')
+  mkdirSync(rootDist, { recursive: true })
+  copyFileSync('dist/main.js', join(rootDist, 'main.js'))
+  copyFileSync('manifest.json', join(rootDist, 'manifest.json'))
+  copyFileSync('styles.css', join(rootDist, 'styles.css'))
   install()
 }
 

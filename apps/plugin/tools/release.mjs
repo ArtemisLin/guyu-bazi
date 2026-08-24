@@ -1,8 +1,8 @@
-// 发版：打包三件套 → git tag → GitHub Release（附 zip ＋ 三个裸文件）。
+// 发版：git tag → GitHub Release（只附 main.js/manifest.json/styles.css 三件套，docs/00 #80）。
 // 目的＝任何时刻 GitHub 上都有一份「用户不靠 agent 也能下载安装」的成品（docs/14 应急恢复指南）。
 // 用法：先 commit＋push，再  npm run release   （工作区必须干净、manifest 版本必须未发过）
 import { execSync } from 'node:child_process'
-import { existsSync, readFileSync, rmSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const sh = (cmd, opts = {}) => execSync(cmd, { stdio: opts.quiet ? 'pipe' : 'inherit', encoding: 'utf8', ...opts })
@@ -17,11 +17,7 @@ if (sh('git status --porcelain', { quiet: true }).trim()) {
 // 无条件重新生产构建：dist/main.js 可能是 watch 留下的未压缩 WIP 或 bump 前的旧包（.gitignore 管不到它）——
 // 发出去的成品必须就是 HEAD 源码。构建会顺带装进本机 vault，与发版语义一致（发的就是用的）。
 sh('node esbuild.config.mjs')
-const zip = join('dist', `guyu-bazi-${ver}.zip`)
-if (existsSync(zip)) rmSync(zip)
-// zip 内含 manifest.json/main.js/styles.css 三件（解压即插件目录内容）
-sh(`cd dist && cp ../manifest.json ../styles.css . && zip -q guyu-bazi-${ver}.zip main.js manifest.json styles.css && rm manifest.json styles.css`)
-console.log(`✓ 打包 ${zip}`)
+// 只传三件套：Obsidian 目录只认 main.js/manifest.json/styles.css，额外附件（如 zip）会被审核点名 extra files
 
 const tags = sh('git tag', { quiet: true }).split('\n')
 const head = sh('git rev-parse HEAD', { quiet: true }).trim()
@@ -40,11 +36,11 @@ sh(`git push origin ${tag}`)
 
 let hasRelease = false
 try { sh(`gh release view ${tag}`, { quiet: true }); hasRelease = true } catch { /* 无则创建 */ }
-const notes = `谷雨八字 ${tag}。安装/恢复：下载 guyu-bazi-${ver}.zip 解压到 <vault>/.obsidian/plugins/guyu-bazi/（或分别下载三个文件放进去），重载 Obsidian。详见仓库 docs/14-应急恢复指南.md。`
+const notes = `谷雨八字 ${tag}。安装/恢复：下载 main.js / manifest.json / styles.css 三个文件放进 <vault>/<配置目录>/plugins/guyu-bazi/，重载 Obsidian。详见仓库 docs/14-应急恢复指南.md。`
 if (hasRelease) {
-  sh(`gh release upload ${tag} "${zip}" dist/main.js manifest.json styles.css --clobber`)
+  sh(`gh release upload ${tag} dist/main.js manifest.json styles.css --clobber`)
   console.log(`✓ Release ${tag} 附件已更新`)
 } else {
-  sh(`gh release create ${tag} "${zip}" dist/main.js manifest.json styles.css --title "谷雨八字 ${tag}" --notes "${notes}"`)
+  sh(`gh release create ${tag} dist/main.js manifest.json styles.css --title "谷雨八字 ${tag}" --notes "${notes}"`)
   console.log(`✓ Release ${tag} 已创建`)
 }

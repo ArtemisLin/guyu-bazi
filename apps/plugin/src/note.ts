@@ -19,8 +19,8 @@ export const FM_VERSION = 1
  */
 export function yamlStr(s: string): string {
   const needs = s === ''
-    || /^[\s\-?:,\[\]{}#&*!|>'"%@`]/.test(s)
-    || /:\s|:$|\s#|[\[\]{}"'\\]|[\r\n\t]/.test(s)
+    || /^[\s\-?:,[\]{}#&*!|>'"%@`]/.test(s)
+    || /:\s|:$|\s#|[[\]{}"'\\]|[\r\n\t]/.test(s)
     || /\s$/.test(s)
     || /^(true|false|null|yes|no|on|off|~)$/i.test(s)
     || /^[+-]?(\d[\d_]*\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(s)
@@ -82,14 +82,15 @@ export function todayStamp(): string {
 export function birthFromFrontmatter(fm: Record<string, unknown> | undefined): Birth | null {
   const raw = fm?.[FM_KEY] as Record<string, unknown> | undefined
   if (!raw) return null
-  const date = String(raw.date ?? '')
-  const time = String(raw.time ?? '')
-  const gender = String(raw.gender ?? '')
+  const asStr = (v: unknown): string => (typeof v === 'string' ? v : '')
+  const date = asStr(raw.date)
+  const time = asStr(raw.time)
+  const gender = asStr(raw.gender)
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) return null
   if (gender !== '乾' && gender !== '坤') return null
   const sect = raw.sect === 'huanri' ? 'huanri' : 'wenzhen'
   const lon = typeof raw.lon === 'number' ? raw.lon : undefined
-  const place = raw.place === undefined ? undefined : String(raw.place)
+  const place = typeof raw.place === 'string' && raw.place ? raw.place : undefined
   const dst = raw.dst === true ? true : undefined
   return { date, time, gender, sect, lon, place, dst }
 }
@@ -142,7 +143,7 @@ export function collectTags(app: App, root: string): string[] {
   const prefix = normalizePath(root) + '/'
   for (const f of app.vault.getMarkdownFiles()) {
     if (!f.path.startsWith(prefix)) continue
-    const fm = app.metadataCache.getFileCache(f)?.frontmatter as Record<string, unknown> | undefined
+    const fm: Record<string, unknown> | undefined = app.metadataCache.getFileCache(f)?.frontmatter
     for (const key of ['tags', '标签']) {
       const v = fm?.[key]
       const arr = Array.isArray(v) ? v : typeof v === 'string' ? v.split(/[,，、\s]+/) : []

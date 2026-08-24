@@ -2,7 +2,7 @@
  * 盘面栏渲染：全部复用 @bazi/view 共享层（与网页验证台同一份实现），
  * 本文件只负责「把 ViewState 翻成共享层的入参」＋岁运条这类壳内布局。
  */
-import { computeChart, formatClock, shiftClockMinutes, suiYunDetail, type ChartResult, type PillarDetail } from '@bazi/core'
+import { computeChart, formatClock, shiftClockMinutes, suiYunDetail, type ChartResult } from '@bazi/core'
 import { JulianDay, SolarDay } from 'tyme4ts'
 import { drillChain } from './anchor'
 import {
@@ -147,6 +147,6 @@ export function chartPaneHtml(st: ViewState): { html: string; anchors: PanelAnch
     ri: rd ? { gz: rd.ganZhi, label: `${rd.month}/${rd.day}` } : { gz: tg.ri, label: `${tdy.getMonth() + 1}/${tdy.getDate()}`, isToday: true },
   }
   html += liurenPanelHtml(anchors, { cat: st.cat, pin: st.pin, folded: st.panelFolded })
-  html += shenShaGroups(c, lead as Array<{ h: string; det: PillarDetail }>, g, st.overviewFolded)
+  html += shenShaGroups(c, lead, g, st.overviewFolded)
   return { html, anchors }
 }

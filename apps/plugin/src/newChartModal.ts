@@ -251,7 +251,7 @@ export class NewChartModal extends Modal {
         c.onclick = () => { this.yearPop = false; onChange(y) }
       }
     }
-    const onCell = pop.querySelector('.bz-yearcell.on') as HTMLElement | null
+    const onCell = pop.querySelector<HTMLElement>('.bz-yearcell.on')
     if (onCell) pop.scrollTop = Math.max(0, onCell.offsetTop - pop.clientHeight / 2)
   }
 

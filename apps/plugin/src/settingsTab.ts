@@ -37,7 +37,7 @@ export class BaziSettingTab extends PluginSettingTab {
     // 应急恢复入口：用户不靠 agent 也能找到成品下载与步骤（docs/14）
     const bk = new Setting(containerEl).setName('备份与应急恢复')
     bk.descEl.createSpan({ text: '断案笔记＝普通 Markdown，靠 remotely-save 同步备份（请定期手动同步一次看有无报错）。插件成品在 GitHub Releases：' })
-    bk.descEl.createEl('a', { text: 'github.com/ArtemisLin/guyu-bazi/releases', href: 'https://github.com/ArtemisLin/guyu-bazi/releases' })
-    bk.descEl.createSpan({ text: '，下载 zip 解压到 vault/.obsidian/plugins/guyu-bazi/ 后重载即可恢复；完整步骤见仓库 docs/14-应急恢复指南.md。' })
+    bk.descEl.createEl('a', { text: 'GitHub releases', href: 'https://github.com/ArtemisLin/guyu-bazi/releases' })
+    bk.descEl.createSpan({ text: `，下载 main.js / manifest.json / styles.css 三个文件放进 vault/${this.app.vault.configDir}/plugins/guyu-bazi/ 后重载即可恢复；完整步骤见仓库 docs/14-应急恢复指南.md。` })
   }
 }

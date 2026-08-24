@@ -2,7 +2,7 @@
   "name": "@bazi/plugin",
   "private": true,
   "license": "AGPL-3.0-only",
-  "version": "0.1.20",
+  "version": "0.1.21",
   "type": "module",
   "scripts": {
     "build": "node esbuild.config.mjs",
@@ -14,7 +14,8 @@
   },
   "dependencies": {
     "@bazi/core": "*",
-    "@bazi/view": "*"
+    "@bazi/view": "*",
+    "tyme4ts": "^1.5.1"
   },
   "devDependencies": {
     "esbuild": "0.21.5",

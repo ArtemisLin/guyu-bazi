@@ -12,7 +12,7 @@ Chart, read, and record — in one three-pane workspace: an interactive chart pa
 - **Notes are the database** — each case is a Markdown note; the birth data lives in frontmatter, so reopening a note reproduces its chart exactly. No proprietary storage, ever.
 - **Two-way annotations** — annotate the currently drilled chart position and it lands in the note as a timestamped line; click any annotation to restore the chart to that exact drill state.
 - **Three input modes** — Gregorian, lunar (leap months supported), and reverse lookup from four pillars.
-- **Fully offline** — zero network requests, zero telemetry. Your clients' birth data never leaves your vault.
+- **Fully offline** — zero network requests, zero telemetry. Your clients' birth data never leaves your vault. (The plugin reads note frontmatter across your vault locally — that is how duplicate-chart detection and tag suggestions work.)
 
 The workbench UI is in Chinese, matching the practice domain of its users.
 
