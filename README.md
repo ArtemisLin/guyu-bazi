@@ -1,46 +1,38 @@
-# GuYu BaZi（谷雨八字）
+# 谷雨八字（GuYu BaZi）
 
-**A BaZi (Four Pillars of Destiny, 四柱八字) charting workbench for Obsidian, built for professional practitioners.**
+**为职业命理师打造的四柱八字解读工作台 —— Obsidian 插件。**
 
-Chart, read, and record — in one three-pane workspace: an interactive chart pane, a case-note pane whose notes live in your vault as plain Markdown, and two-way annotations that link moments on the chart to life events in your notes.
+排盘、解读、记录，在同一个三栏工作区完成：左栏交互式盘面，中栏断案笔记（就是你库里的普通 Markdown 文件），批注与盘面双向联动——盘上的时点写进笔记，笔记里的时点一键回到盘面。
 
-## Features
+## 功能
 
-- **Deterministic chart engine** — four pillars with hidden stems, ten gods, twelve life-stages, void branches and nayin; true solar time correction by birthplace longitude (3,000+ China county coordinates built in); the 1986–1991 China DST confirmation; both late-Zi-hour schools (day unchanged / day advanced).
-- **Luck cycles & drill-down** — 20 decade cycles, minor cycles (小运), and year → solar-term month → day → hour drill-down, each column joining the detail grid with its own shensha.
-- **Shensha, thoroughly** — 55+ natal shensha plus a 131-rule dynamic shensha panel (year/season/month/xun/day-stem/day-branch perspectives), every rule sourced from classical texts and locked by tests.
-- **Notes are the database** — each case is a Markdown note; the birth data lives in frontmatter, so reopening a note reproduces its chart exactly. No proprietary storage, ever.
-- **Two-way annotations** — annotate the currently drilled chart position and it lands in the note as a timestamped line; click any annotation to restore the chart to that exact drill state.
-- **Three input modes** — Gregorian, lunar (leap months supported), and reverse lookup from four pillars.
-- **Fully offline** — zero network requests, zero telemetry. Your clients' birth data never leaves your vault. (The plugin reads note frontmatter across your vault locally — that is how duplicate-chart detection and tag suggestions work.)
+- **确定性排盘引擎** —— 四柱＋藏干/十神/星运/自坐/空亡/纳音九行明细；真太阳时按出生地经度修正（内置全国 3000+ 区县坐标，省市区三级联动选择）；1986–1991 年中国夏令时确认项（勾选自动减 1 小时按标准时排）；晚子时两派可选（不换日／换日）。
+- **大运流年与逐级钻取** —— 大运 20 步、小运（含 0 岁小运期）、流年 → 节气流月 → 流日 → 流时逐级点选，选中的每一级都并入明细表、各带神煞。
+- **神煞，做到全** —— 原局 55+ 神煞，另有 131 条动态神煞面板（岁煞／季煞／月煞／旬煞／日干煞／日支煞六个视角切换），每条起法皆有古籍出处并由测试锁定；页底神煞总览按起法分组，「神煞＝位 → 盘中落点」一目了然；自坐行下附十二长生总表速查（火土同宫）。
+- **笔记即数据库** —— 每个案例一篇 Markdown：生辰存在 frontmatter 里，重开笔记原样重现盘面。没有私有存储格式，你的数据永远是你的。
+- **批注双向联动** —— 盘面钻到哪级，点「✍ 批注」就把该时点的锚行插进笔记「人生节点」，光标落好直接写，盘面全程可见；点笔记里的批注卡片，盘面立刻还原到那个时点。
+- **三种录入** —— 公历、农历（支持闰月）、四柱反推生辰（逐柱渐进筛选，选齐自动查候选）。
+- **完全离线** —— 零联网、零遥测，客户生辰不出你的库。（插件会在本地扫描库内笔记的 frontmatter——这是同生辰重复检测与标签推荐的实现方式，全部在本机完成。）
 
-The workbench UI is in Chinese, matching the practice domain of its users.
+## 安装
 
-## Install
+- **社区插件市场**（审核上架后）：Obsidian → 设置 → 第三方插件 → 搜索「GuYu BaZi」。
+- **手动安装**：从 [最新 Release](https://github.com/ArtemisLin/guyu-bazi/releases) 下载 `main.js`、`manifest.json`、`styles.css` 三个文件，放入 `<你的库>/<配置目录>/plugins/guyu-bazi/`，重载 Obsidian。
 
-- **Community plugins** (pending review): search for "GuYu BaZi" in Obsidian → Settings → Community plugins.
-- **Manual**: download `main.js`, `manifest.json`, `styles.css` from the [latest release](https://github.com/ArtemisLin/guyu-bazi/releases) into `<vault>/.obsidian/plugins/guyu-bazi/`, then reload Obsidian.
+## 快速上手
 
-## Quick start
+1. 点侧边栏的罗盘图标（或命令面板「打开工作台」）打开三栏工作台。
+2. 点 **＋新盘** 录入生辰（公历／农历／四柱反推），选出生地做真太阳时校准，排盘——断案笔记自动落在 `八字剧本集/`。
+3. 点选流年／流月／流日／流时钻取，点 **✍ 批注** 就地写下该时点的批语；中栏批注时间线上点任意卡片，盘面回到那个时点。
 
-1. Click the compass icon in the ribbon (or run the "打开工作台" command) to open the workbench.
-2. Click **＋新盘** to enter a birth (Gregorian / lunar / four-pillar reverse), pick a birthplace for true-solar-time correction, and chart it — a case note is created in `八字剧本集/`.
-3. Drill into a year / month / day / hour, then click **✍ 批注** to write an annotation anchored to that moment. Click annotation cards in the middle pane to jump the chart back.
+写进笔记的持久化格式（frontmatter 字段、批注行文法）见 [docs/13](docs/13-持久化格式契约.md)，保证向后兼容——新版本插件永远读得懂旧笔记。
 
-The persistent note format (frontmatter fields, annotation line grammar) is documented in [docs/13](docs/13-持久化格式契约.md) and is guaranteed backward-compatible.
+**说明**：三栏工作台仅桌面端可用；手机上断案笔记作为普通 Markdown 照常阅读。
 
-**Note**: the three-pane workbench is desktop-only; on mobile your case notes remain fully readable as ordinary Markdown.
+## 开发
 
-## Development
+npm workspaces monorepo：`packages/bazi-core`（纯 TS 排盘引擎，零 Obsidian 依赖）、`packages/bazi-view`（共享渲染层）、`apps/plugin`（Obsidian 壳）。`npm ci && npm run check` 一条命令跑完类型检查、引擎测试与插件冒烟。引擎规则值由充分验证的测试套件锁定；本仓库内的合成测试样本锁定已验证引擎的输出（校准出处档案由维护者另行保存）。
 
-npm-workspaces monorepo: `packages/bazi-core` (pure TS chart engine, zero Obsidian deps), `packages/bazi-view` (shared HTML renderer), `apps/plugin` (the Obsidian shell). `npm ci && npm run check` runs typechecks, the engine test suite, and plugin smoke tests. Engine rule values are locked by an extensive verified test suite; synthetic fixtures in this repo pin the verified engine's outputs (provenance lives in the maintainers' calibration archive).
+## 许可
 
-## License
-
-[AGPL-3.0-only](LICENSE). Bundles [tyme4ts](https://github.com/6tail/tyme4ts) (MIT) and derives shensha rule tables from [chxb/shensha](https://github.com/chxb/shensha) (MIT) — see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
-
----
-
-### 中文简介
-
-谷雨八字：命理师的一体化解读工作台（Obsidian 插件）。三栏：排盘｜断案笔记｜批注时间线。确定性排盘引擎（四柱明细、真太阳时经度修正、1986–1991 夏令时确认、晚子时两派）、大运小运与流年→流月→流日→流时钻取、原局 55+ 神煞＋动态神煞 131 条（岁/季/月/旬/日干/日支六视角）、公历/农历/四柱反推三种录入。**笔记即数据库**：生辰存于 frontmatter，重开笔记原样重现盘面；**批注双向联动**：盘面钻到哪级批到哪级，点批注卡片盘面回到那个时点。完全离线、零联网、零遥测——客户生辰不出你的库。工作台仅桌面端；手机上笔记照常可读。
+[AGPL-3.0-only](LICENSE)。打包了 [tyme4ts](https://github.com/6tail/tyme4ts)（MIT），神煞规则表衍生自 [chxb/shensha](https://github.com/chxb/shensha)（MIT）——见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
